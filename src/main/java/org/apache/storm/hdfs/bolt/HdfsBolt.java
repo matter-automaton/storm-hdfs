@@ -93,6 +93,8 @@ public class HdfsBolt extends AbstractHdfsBolt{
             out.write(bytes);
             this.offset += bytes.length;
 
+            this.collector.ack(tuple);
+
             if(this.syncPolicy.mark(tuple, this.offset)){
                 if(this.out instanceof HdfsDataOutputStream){
                     ((HdfsDataOutputStream)this.out).hsync(EnumSet.of(SyncFlag.UPDATE_LENGTH));
@@ -101,9 +103,6 @@ public class HdfsBolt extends AbstractHdfsBolt{
                 }
                 this.syncPolicy.reset();
             }
-
-            this.collector.ack(tuple);
-
             if(this.rotationPolicy.mark(tuple, this.offset)){
                 rotateOutputFile();
                 this.offset = 0;
