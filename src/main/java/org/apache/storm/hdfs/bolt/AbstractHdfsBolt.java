@@ -49,6 +49,7 @@ public abstract class AbstractHdfsBolt extends BaseRichBolt {
     protected int rotation = 0;
     protected String fsUrl;
     protected String configKey;
+//    protected String path;
 
     protected Configuration hdfsConfig;
 
@@ -68,13 +69,7 @@ public abstract class AbstractHdfsBolt extends BaseRichBolt {
         LOG.info("File rotation took {} ms.", time);
     }
 
-    /**
-     * Marked as final to prevent override. Subclasses should implement the doPrepare() method.
-     * @param conf
-     * @param topologyContext
-     * @param collector
-     */
-    public final void prepare(Map conf, TopologyContext topologyContext, OutputCollector collector){
+    public void prepare(Map conf, TopologyContext topologyContext, OutputCollector collector){
         if (this.syncPolicy == null) throw new IllegalStateException("SyncPolicy must be specified.");
         if (this.rotationPolicy == null) throw new IllegalStateException("RotationPolicy must be specified.");
         if (this.fsUrl == null) {
