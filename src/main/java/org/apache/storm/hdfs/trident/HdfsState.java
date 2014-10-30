@@ -43,7 +43,6 @@ public class HdfsState implements State {
         protected int rotation = 0;
         protected transient Configuration hdfsConfig;
         protected ArrayList<RotationAction> rotationActions = new ArrayList<RotationAction>();
-        protected Object writeLock;
 
         abstract void closeOutputFile() throws IOException;
 
@@ -56,17 +55,15 @@ public class HdfsState implements State {
         protected void rotateOutputFile() throws IOException {
             LOG.info("Rotating output file...");
             long start = System.currentTimeMillis();
-            synchronized (this.writeLock) {
-                closeOutputFile();
-                this.rotation++;
+            closeOutputFile();
+            this.rotation++;
 
-                Path newFile = createOutputFile();
-                LOG.info("Performing {} file rotation actions.", this.rotationActions.size());
-                for (RotationAction action : this.rotationActions) {
-                    action.execute(this.fs, this.currentFile);
-                }
-                this.currentFile = newFile;
+            Path newFile = createOutputFile();
+            LOG.info("Performing {} file rotation actions.", this.rotationActions.size());
+            for(RotationAction action : this.rotationActions){
+                action.execute(this.fs, this.currentFile);
             }
+            this.currentFile = newFile;
             long time = System.currentTimeMillis() - start;
             LOG.info("File rotation took {} ms.", time);
 
@@ -74,7 +71,6 @@ public class HdfsState implements State {
         }
 
         void prepare(Map conf, int partitionIndex, int numPartitions){
-            this.writeLock = new Object();
             if (this.rotationPolicy == null) throw new IllegalStateException("RotationPolicy must be specified.");
             if (this.fsUrl == null) {
                 throw new IllegalStateException("File system URL must be specified.");
@@ -156,25 +152,23 @@ public class HdfsState implements State {
         @Override
         public void execute(List<TridentTuple> tuples) throws IOException {
             boolean rotated = false;
-            synchronized (this.writeLock) {
-                for (TridentTuple tuple : tuples) {
-                    byte[] bytes = this.format.format(tuple);
-                    out.write(bytes);
-                    this.offset += bytes.length;
+            for(TridentTuple tuple : tuples){
+                byte[] bytes = this.format.format(tuple);
+                out.write(bytes);
+                this.offset += bytes.length;
 
-                    if (this.rotationPolicy.mark(tuple, this.offset)) {
-                        rotateOutputFile();
-                        this.offset = 0;
-                        this.rotationPolicy.reset();
-                        rotated = true;
-                    }
+                if(this.rotationPolicy.mark(tuple, this.offset)){
+                    rotateOutputFile();
+                    this.offset = 0;
+                    this.rotationPolicy.reset();
+                    rotated = true;
                 }
-                if (!rotated) {
-                    if (this.out instanceof HdfsDataOutputStream) {
-                        ((HdfsDataOutputStream) this.out).hsync(EnumSet.of(HdfsDataOutputStream.SyncFlag.UPDATE_LENGTH));
-                    } else {
-                        this.out.hsync();
-                    }
+            }
+            if(!rotated){
+                if(this.out instanceof HdfsDataOutputStream){
+                    ((HdfsDataOutputStream)this.out).hsync(EnumSet.of(HdfsDataOutputStream.SyncFlag.UPDATE_LENGTH));
+                } else {
+                    this.out.hsync();
                 }
             }
         }
@@ -256,12 +250,9 @@ public class HdfsState implements State {
 
         @Override
         public void execute(List<TridentTuple> tuples) throws IOException {
-            long offset;
             for(TridentTuple tuple : tuples) {
-                synchronized (this.writeLock) {
-                    this.writer.append(this.format.key(tuple), this.format.value(tuple));
-                    offset = this.writer.getLength();
-                }
+                this.writer.append(this.format.key(tuple), this.format.value(tuple));
+                long offset = this.writer.getLength();
 
                 if (this.rotationPolicy.mark(tuple, offset)) {
                     rotateOutputFile();

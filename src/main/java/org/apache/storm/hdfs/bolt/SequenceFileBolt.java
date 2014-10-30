@@ -106,20 +106,16 @@ public class SequenceFileBolt extends AbstractHdfsBolt {
     @Override
     public void execute(Tuple tuple) {
         try {
-            long offset;
-            synchronized (this.writeLock) {
-                this.writer.append(this.format.key(tuple), this.format.value(tuple));
-                offset = this.writer.getLength();
-
-                if (this.syncPolicy.mark(tuple, offset)) {
-                    this.writer.hsync();
-                    this.syncPolicy.reset();
-                }
-            }
-
+            this.writer.append(this.format.key(tuple), this.format.value(tuple));
+            long offset = this.writer.getLength();
             this.collector.ack(tuple);
+
+            if (this.syncPolicy.mark(tuple, offset)) {
+                this.writer.hsync();
+                this.syncPolicy.reset();
+            }
             if (this.rotationPolicy.mark(tuple, offset)) {
-                rotateOutputFile(); // synchronized
+                rotateOutputFile();
                 this.rotationPolicy.reset();
             }
         } catch (IOException e) {

@@ -49,24 +49,21 @@ public abstract class AbstractHdfsBolt extends BaseRichBolt {
     protected int rotation = 0;
     protected String fsUrl;
     protected String configKey;
-    protected Object writeLock;
 
     protected transient Configuration hdfsConfig;
 
     protected void rotateOutputFile() throws IOException {
         LOG.info("Rotating output file...");
         long start = System.currentTimeMillis();
-        synchronized (this.writeLock) {
-            closeOutputFile();
-            this.rotation++;
+        closeOutputFile();
+        this.rotation++;
 
-            Path newFile = createOutputFile();
-            LOG.info("Performing {} file rotation actions.", this.rotationActions.size());
-            for (RotationAction action : this.rotationActions) {
-                action.execute(this.fs, this.currentFile);
-            }
-            this.currentFile = newFile;
+        Path newFile = createOutputFile();
+        LOG.info("Performing {} file rotation actions.", this.rotationActions.size());
+        for(RotationAction action : this.rotationActions){
+            action.execute(this.fs, this.currentFile);
         }
+        this.currentFile = newFile;
         long time = System.currentTimeMillis() - start;
         LOG.info("File rotation took {} ms.", time);
     }
@@ -78,7 +75,6 @@ public abstract class AbstractHdfsBolt extends BaseRichBolt {
      * @param collector
      */
     public final void prepare(Map conf, TopologyContext topologyContext, OutputCollector collector){
-        this.writeLock = new Object();
         if (this.syncPolicy == null) throw new IllegalStateException("SyncPolicy must be specified.");
         if (this.rotationPolicy == null) throw new IllegalStateException("RotationPolicy must be specified.");
         if (this.fsUrl == null) {
