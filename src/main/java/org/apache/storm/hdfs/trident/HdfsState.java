@@ -139,6 +139,7 @@ public class HdfsState implements State {
 
         @Override
         void closeOutputFile() throws IOException {
+            this.out.hsync();
             this.out.close();
         }
 
@@ -245,6 +246,7 @@ public class HdfsState implements State {
 
         @Override
         void closeOutputFile() throws IOException {
+            this.writer.hsync();
             this.writer.close();
         }
 

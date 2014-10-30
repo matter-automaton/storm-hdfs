@@ -117,6 +117,7 @@ public class HdfsBolt extends AbstractHdfsBolt{
 
     @Override
     void closeOutputFile() throws IOException {
+        this.out.hsync();
         this.out.close();
     }
 
