@@ -36,12 +36,12 @@ public class HdfsState implements State {
 
         protected String fsUrl;
         protected String configKey;
-        protected transient FileSystem fs;
+        protected FileSystem fs;
         private Path currentFile;
         protected FileRotationPolicy rotationPolicy;
         protected FileNameFormat fileNameFormat;
         protected int rotation = 0;
-        protected transient Configuration hdfsConfig;
+        protected Configuration hdfsConfig;
         protected ArrayList<RotationAction> rotationActions = new ArrayList<RotationAction>();
 
         abstract void closeOutputFile() throws IOException;
@@ -97,7 +97,7 @@ public class HdfsState implements State {
 
     public static class HdfsFileOptions extends Options {
 
-        private transient FSDataOutputStream out;
+        private FSDataOutputStream out;
         protected RecordFormat format;
         private long offset = 0;
 
@@ -177,7 +177,7 @@ public class HdfsState implements State {
     public static class SequenceFileOptions extends Options {
         private SequenceFormat format;
         private SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.RECORD;
-        private transient SequenceFile.Writer writer;
+        private SequenceFile.Writer writer;
         private String compressionCodec = "default";
         private transient CompressionCodecFactory codecFactory;
 

@@ -41,7 +41,7 @@ public class SequenceFileBolt extends AbstractHdfsBolt {
 
     private SequenceFormat format;
     private SequenceFile.CompressionType compressionType = SequenceFile.CompressionType.RECORD;
-    private transient SequenceFile.Writer writer;
+    private SequenceFile.Writer writer;
 
     private String compressionCodec = "default";
     private transient CompressionCodecFactory codecFactory;
