@@ -41,9 +41,9 @@ import java.util.Map;
 public class HdfsBolt extends AbstractHdfsBolt{
     private static final Logger LOG = LoggerFactory.getLogger(HdfsBolt.class);
 
-    private FSDataOutputStream out;
-    private RecordFormat format;
-    private long offset = 0;
+    protected FSDataOutputStream out;
+    protected RecordFormat format;
+    protected long offset = 0;
 
     public HdfsBolt withFsUrl(String fsUrl){
         this.fsUrl = fsUrl;
@@ -96,12 +96,7 @@ public class HdfsBolt extends AbstractHdfsBolt{
             this.collector.ack(tuple);
 
             if(this.syncPolicy.mark(tuple, this.offset)){
-                if(this.out instanceof HdfsDataOutputStream){
-                    ((HdfsDataOutputStream)this.out).hsync(EnumSet.of(SyncFlag.UPDATE_LENGTH));
-                } else {
-                    this.out.hsync();
-                }
-                this.syncPolicy.reset();
+                this.syncToHdfs();
             }
             if(this.rotationPolicy.mark(tuple, this.offset)){
                 rotateOutputFile();
@@ -125,5 +120,14 @@ public class HdfsBolt extends AbstractHdfsBolt{
         Path path = new Path(this.fileNameFormat.getPath(), this.fileNameFormat.getName(this.rotation, System.currentTimeMillis()));
         this.out = this.fs.create(path);
         return path;
+    }
+    
+    public void syncToHdfs() throws IOException {
+        if (this.out instanceof HdfsDataOutputStream) {
+            ((HdfsDataOutputStream)this.out).hsync(EnumSet.of(SyncFlag.UPDATE_LENGTH));
+        } else {
+            this.out.hsync();
+        }
+        this.syncPolicy.reset();
     }
 }

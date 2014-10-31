@@ -1,3 +1,7 @@
+# Changes from base
+
+This fork makes `HdfsBolt` more amenable to subclassing.
+
 # Storm HDFS
 
 Storm components for interacting with HDFS file systems

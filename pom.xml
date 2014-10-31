@@ -24,7 +24,7 @@
         <version>7</version>
     </parent>
 
-    <groupId>com.github.ptgoetz</groupId>
+    <groupId>com.github.mrusca</groupId>
     <artifactId>storm-hdfs</artifactId>
     <version>0.1.3-SNAPSHOT</version>
 
